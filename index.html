@@ -1,0 +1,1426 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>终极切片生成器 | 小瑶制作</title>
+    <style>
+        :root {
+            --primary-color: #ff7eb9;
+            --secondary-color: #ff65a3;
+            --light-pink: #ffcce0;
+            --dark-pink: #e75480;
+            --bg-color: #fff5f9;
+        }
+        body {
+            font-family: 'Arial Rounded MT Bold', 'Microsoft YaHei', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: var(--bg-color);
+            color: #5a3a4a;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 5px 15px rgba(233, 84, 128, 0.1);
+        }
+        h1 {
+            text-align: center;
+            color: var(--dark-pink);
+            margin-bottom: 10px;
+            font-size: 2.2em;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.1);
+        }
+        .subtitle {
+            text-align: center;
+            color: var(--primary-color);
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+        .upload-section {
+            background-color: var(--light-pink);
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            border: 2px dashed var(--primary-color);
+            text-align: center;
+        }
+        .controls {
+            background-color: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            box-shadow: 0 3px 10px rgba(255, 126, 185, 0.1);
+        }
+        .control-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 15px;
+        }
+        .control-item {
+            flex: 1;
+            min-width: 200px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--dark-pink);
+            font-weight: bold;
+        }
+        input[type="range"], select, input[type="number"] {
+            width: 100%;
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        input[type="file"] {
+            display: none;
+        }
+        .file-upload-btn {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 12px 25px;
+            border-radius: 50px;
+            cursor: pointer;
+            display: inline-block;
+            font-size: 1.1em;
+            transition: all 0.3s;
+            box-shadow: 0 3px 6px rgba(255, 101, 163, 0.2);
+        }
+        .file-upload-btn:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 10px rgba(255, 101, 163, 0.3);
+        }
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 1.1em;
+            transition: all 0.3s;
+            box-shadow: 0 3px 6px rgba(255, 101, 163, 0.2);
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 10px rgba(255, 101, 163, 0.3);
+        }
+        button:disabled {
+            background-color: #d3d3d3;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        .preview-container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            text-align: center;
+            box-shadow: 0 3px 10px rgba(255, 126, 185, 0.1);
+            position: relative;
+        }
+        #outputCanvas {
+            max-width: 100%;
+            border-radius: 10px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+            background-color: #f0f0f0;
+            background-image: linear-gradient(45deg, #ddd 25%, transparent 25%, transparent 75%, #ddd 75%, #ddd),
+                              linear-gradient(45deg, #ddd 25%, transparent 25%, transparent 75%, #ddd 75%, #ddd);
+            background-size: 20px 20px;
+            background-position: 0 0, 10px 10px;
+            cursor: crosshair;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            color: var(--primary-color);
+            font-size: 0.9em;
+        }
+        .author {
+            font-weight: bold;
+            color: var(--dark-pink);
+        }
+        .range-value {
+            display: inline-block;
+            width: 40px;
+            text-align: right;
+            margin-left: 10px;
+        }
+        .progress-container {
+            margin: 20px 0;
+        }
+        .progress-bar {
+            height: 15px;
+            background-color: #f0f0f0;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .progress {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            border-radius: 10px;
+            width: 0%;
+            transition: width 0.3s;
+        }
+        .advanced-panel {
+            display: none;
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 15px;
+            margin-top: 20px;
+        }
+        .slice-controls {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 15px;
+            padding-right: 10px;
+        }
+        .slice-control {
+            background-color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .slice-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: var(--dark-pink);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .slice-toggle {
+            display: flex;
+            align-items: center;
+        }
+        .slice-toggle label {
+            margin-right: 10px;
+            font-weight: normal;
+        }
+        .effect-panel {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px dashed #ddd;
+        }
+        .tooltip {
+            position: absolute;
+            background-color: rgba(0,0,0,0.7);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 14px;
+            pointer-events: none;
+            z-index: 100;
+            display: none;
+        }
+        
+         /* 新增：优化颜色选择器样式 */
+        .color-control {
+            margin-bottom: 15px;
+        }
+        input[type="color"] {
+            -webkit-appearance: none;
+            border: none;
+            width: 60px;
+            height: 40px;
+            border-radius: 5px;
+            padding: 0;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+        input[type="color"]::-webkit-color-swatch {
+            border: none;
+            border-radius: 3px;
+        }
+        input[type="color"]::-webkit-color-swatch-wrapper {
+            padding: 0;
+        }
+        .color-presets {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .preset {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: 2px solid #ddd;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .preset:hover {
+            transform: scale(1.1);
+        }
+        
+        /* 新增：卡密验证相关样式 */
+        .auth-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(255, 255, 255, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .auth-box {
+            background-color: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+        }
+        .auth-box h2 {
+            color: var(--dark-pink);
+            margin-top: 0;
+        }
+        .auth-input {
+            width: 100%;
+            padding: 12px;
+            margin: 15px 0;
+            border: 2px solid var(--light-pink);
+            border-radius: 10px;
+            font-size: 16px;
+            text-align: center;
+        }
+        .auth-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+        .auth-message {
+            margin: 15px 0;
+            color: var(--dark-pink);
+            font-weight: bold;
+            min-height: 20px;
+        }
+        .auth-error {
+            color: #ff3333;
+        }
+        .auth-success {
+            color: #33aa33;
+        }
+        .auth-footer {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #888;
+        }
+        
+        @media (max-width: 600px) {
+            .container {
+                padding: 15px;
+            }
+            button {
+                width: 100%;
+                margin-bottom: 10px;
+            }
+            .control-item {
+                min-width: 100%;
+            }
+            input[type="color"] {
+                width: 50px;
+                height: 35px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 新增：卡密验证覆盖层 -->
+    <div id="authOverlay" class="auth-overlay">
+        <div class="auth-box">
+            <h2>🌸 请输入卡密 🌸</h2>
+            <p>请购买卡密后输入以使用本工具</p>
+            <input type="text" id="authKeyInput" class="auth-input" placeholder="请输入卡密">
+            <div id="authMessage" class="auth-message"></div>
+            <button id="authSubmitBtn">验证卡密</button>
+            <div class="auth-footer">
+                <p>卡密问题请联系: 小瑶🐧2924808817</p>
+                <p>当前版本: 1.0.0</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="container" id="mainContainer" style="display: none;">
+        <h1>🌸 小瑶の切片生成 🌸</h1>
+        <p class="subtitle">我是一个人类 一个人 类类的TvT</p>
+        
+        <div class="upload-section">
+            <label for="tilUpload" class="file-upload-btn">
+                📁 上传 .til 配置文件
+            </label>
+            <input type="file" id="tilUpload" accept=".til">
+            <p id="fileName" style="margin-top: 10px; color: var(--dark-pink);"></p>
+        </div>
+        
+        <div class="controls">
+            <h2 style="color: var(--dark-pink); margin-top: 0;">全局设置</h2>
+            
+            <div class="control-group">
+                <div class="control-item">
+                    <label for="globalWidthPercent">宽度比例 <span id="globalWidthPercentValue" class="range-value">80</span>%</label>
+                    <input type="range" id="globalWidthPercent" min="10" max="200" value="80">
+                </div>
+                
+                <div class="control-item">
+                    <label for="globalHeightPercent">高度比例 <span id="globalHeightPercentValue" class="range-value">80</span>%</label>
+                    <input type="range" id="globalHeightPercent" min="10" max="200" value="80">
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <div class="control-item">
+                    <label for="sliceColor">切片颜色</label>
+                    <div class="color-control">
+                        <input type="color" id="sliceColor" value="#ff7eb9">
+                        <div class="color-presets">
+                            <div class="preset" style="background-color: #ff7eb9;" data-color="#ff7eb9"></div>
+                            <div class="preset" style="background-color: #ff65a3;" data-color="#ff65a3"></div>
+                            <div class="preset" style="background-color: #e75480;" data-color="#e75480"></div>
+                            <div class="preset" style="background-color: #ffffff;" data-color="#ffffff"></div>
+                            <div class="preset" style="background-color: #000000;" data-color="#000000"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="control-item">
+                    <label for="cornerRadius">圆角半径 <span id="cornerRadiusValue" class="range-value">10</span>px</label>
+                    <input type="range" id="cornerRadius" min="0" max="50" value="10">
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <div class="control-item">
+                    <label for="positionType">填充位置</label>
+                    <select id="positionType">
+                        <option value="center">居中</option>
+                        <option value="top-left">左上</option>
+                        <option value="top-right">右上</option>
+                        <option value="bottom-left">左下</option>
+                        <option value="bottom-right">右下</option>
+                    </select>
+                </div>
+                
+                <div class="control-item">
+                    <button id="toggleAdvancedBtn">高级设置 ▼</button>
+                </div>
+            </div>
+            
+            <div id="advancedPanel" class="advanced-panel">
+                <h3 style="color: var(--dark-pink); margin-top: 0;">单独设置每个切片</h3>
+                <div class="slice-controls" id="sliceControlsContainer">
+                    <p>请先上传.til文件以显示切片控制选项</p>
+                </div>
+                
+                <h3 style="color: var(--dark-pink); margin-top: 20px;">阴影设置</h3>
+                <div class="control-group">
+                    <div class="control-item">
+                        <label for="shadowEnabled">启用阴影</label>
+                        <input type="checkbox" id="shadowEnabled" style="width: auto;">
+                    </div>
+                    <div class="control-item">
+                        <label for="shadowColor">阴影颜色</label>
+                        <div class="color-control">
+                            <input type="color" id="shadowColor" value="#000000">
+                            <div class="color-presets">
+                                <div class="preset" style="background-color: #000000;" data-color="#000000"></div>
+                                <div class="preset" style="background-color: #333333;" data-color="#333333"></div>
+                                <div class="preset" style="background-color: #666666;" data-color="#666666"></div>
+                                <div class="preset" style="background-color: #999999;" data-color="#999999"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <div class="control-item">
+                        <label for="shadowBlur">阴影模糊 <span id="shadowBlurValue" class="range-value">10</span>px</label>
+                        <input type="range" id="shadowBlur" min="0" max="50" value="10">
+                    </div>
+                    <div class="control-item">
+                        <label for="shadowOffsetX">水平偏移 <span id="shadowOffsetXValue" class="range-value">5</span>%</label>
+                        <input type="range" id="shadowOffsetX" min="-100" max="100" value="5">
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <div class="control-item">
+                        <label for="shadowOffsetY">垂直偏移 <span id="shadowOffsetYValue" class="range-value">5</span>%</label>
+                        <input type="range" id="shadowOffsetY" min="-100" max="100" value="5">
+                    </div>
+                    <div class="control-item">
+                        <label for="shadowOpacity">阴影透明度 <span id="shadowOpacityValue" class="range-value">50</span>%</label>
+                        <input type="range" id="shadowOpacity" min="0" max="100" value="50">
+                    </div>
+                </div>
+                
+                <h3 style="color: var(--dark-pink); margin-top: 20px;">描边设置</h3>
+                <div class="control-group">
+                    <div class="control-item">
+                        <label for="strokeEnabled">启用描边</label>
+                        <input type="checkbox" id="strokeEnabled" style="width: auto;">
+                    </div>
+                    <div class="control-item">
+                        <label for="strokeColor">描边颜色</label>
+                        <div class="color-control">
+                            <input type="color" id="strokeColor" value="#ffffff">
+                            <div class="color-presets">
+                                <div class="preset" style="background-color: #ffffff;" data-color="#ffffff"></div>
+                                <div class="preset" style="background-color: #000000;" data-color="#000000"></div>
+                                <div class="preset" style="background-color: #ff0000;" data-color="#ff0000"></div>
+                                <div class="preset" style="background-color: #00ff00;" data-color="#00ff00"></div>
+                                <div class="preset" style="background-color: #0000ff;" data-color="#0000ff"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <div class="control-item">
+                        <label for="strokeWidth">描边宽度 <span id="strokeWidthValue" class="range-value">2</span>px</label>
+                        <input type="range" id="strokeWidth" min="0" max="20" value="2">
+                    </div>
+                    <div class="control-item">
+                        <label for="strokeBlur">描边模糊 <span id="strokeBlurValue" class="range-value">0</span>px</label>
+                        <input type="range" id="strokeBlur" min="0" max="10" value="0">
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <div class="control-item">
+                        <label for="strokeType">描边样式</label>
+                        <select id="strokeType">
+                            <option value="solid">实线</option>
+                            <option value="dashed">虚线</option>
+                        </select>
+                    </div>
+                    <div class="control-item" id="dashSettings" style="display: none;">
+                        <label for="dashPattern">虚线样式</label>
+                        <input type="text" id="dashPattern" value="5,3" placeholder="例如: 5,3">
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div style="text-align: center; margin-bottom: 20px;">
+            <button id="generateBtn">生成图片</button>
+            <button id="saveBtn" disabled>保存图片</button>
+            <button id="resetBtn">重置所有</button>
+        </div>
+        
+        <div class="progress-container">
+            <div class="progress-bar">
+                <div class="progress" id="progressBar"></div>
+            </div>
+            <p id="progressText" style="text-align: center; margin-top: 5px; color: var(--primary-color);"></p>
+        </div>
+        
+        <div class="preview-container">
+            <h2 style="color: var(--dark-pink); margin-top: 0;">生成预览</h2>
+            <canvas id="outputCanvas"></canvas>
+            <div class="tooltip" id="sliceTooltip"></div>
+            <p style="color: #888; font-size: 0.9em;">(灰色网格代表透明区域，点击可查看切片编号)</p>
+        </div>
+        
+        <div class="footer">
+            <p>本工具由 <span class="author">小瑶</span> 制作 | 终极切片图片生成工具</p>
+            <p>💖 感谢使用！如有问题请联系: 小瑶🐧2924808817</p>
+            <p id="licenseInfo" style="font-size: 0.8em; color: #888;"></p>
+        </div>
+    </div>
+
+    <script>
+        // =============================================
+        // 卡密系统配置 (您可以修改这部分)
+        // =============================================
+        
+        // 有效卡密列表 (实际应用中应从服务器获取)
+const VALID_KEYS = [
+    // 原有卡密
+    {
+        key: "XY2024-ABCD-EFGH-IJKL", // 卡密
+        maxUses: 999,                   // 最大使用次数
+        validUntil: "2099-12-31",      // 有效期
+        used: 0                        // 已使用次数
+    },
+    {
+        key: "XY2024-MNOP-QRST-UVWX",
+        maxUses: 999,
+        validUntil: "2099-06-30",
+        used: 0
+    },
+    {
+        key: "XY2024-YZAB-CDEF-GHIJ",
+        maxUses: 999,                 // 999表示无限次
+        validUntil: "2099-12-31",      // 长期有效
+        used: 0
+    },
+
+    // 新增50个完全随机的永久卡密 (每个使用次数5次)
+    { key: "7XIAOYAO9-KZ42-PL98-3RM6", maxUses: 5, validUntil: "2099-12-31", used: 0 },
+    { key: "YAO5TQ-6V9D-2X8F-HS4K", maxUses: 5, validUntil: "2099-12-31", used: 0 },
+    { key: "B4XIAOYAO7N-3C8D-9F2G-5H1J", maxUses: 5, validUntil: "2099-12-31", used: 0 },
+    { key: "YAO8L2-M4P6-Q9R3-S1T5", maxUses: 5, validUntil: "2099-12-31", used: 0 },
+    { key: "3XIAOYAO-K9J8-D2F4-G6H7", maxUses: 5, validUntil: "2099-12-31", used: 0 },
+    { key: "YAO7X-5P3K-9M2N-8B4V", maxUses: 5, validUntil: "2099-12-31", used: 0 },
+    { key: "X6XIAOYAO3-C8B2-N5D7-F9G1", maxUses: 5, validUntil: "2099-12-31", used: 0 },
+    { key: "YAO9F-2H5J-8K3L-7M4N", maxUses: 5, validUntil: "2099-12-31", used: 0 },
+    { key: "DXIAOYAO8Z-4V6B-9N1M-2K3L", maxUses: 5, validUntil: "2099-12-31", used: 0 },
+    { key: "YAO4R-7T9Y-1U3I-5O8P", maxUses: 5, validUntil: "2099-12-31", used: 0 },
+    { key: "9XIAOYAO2-W4E6-R8T1-Y3U5", maxUses: 5, validUntil: "2099-12-31", used: 0 },
+    { key: "YAO1S-5D7F-9G2H-4J6K", maxUses: 5, validUntil: "2099-12-31", used: 0 },
+    { key: "JXIAOYAO3K-8M2N-5B4V-6C7X", maxUses: 5, validUntil: "2099-12-31", used: 0 },
+    { key: "YAO6Z-9Q1W-3E4R-7T8Y", maxUses: 5, validUntil: "2099-12-31", used: 0 },
+    { key: "5XIAOYAO7P-2L4K-9J8H-1G3F", maxUses: 5, validUntil: "2099-12-31", used: 0 },
+    { key: "YAO3V-8B6N-9M1Q-4W7E", maxUses: 5, validUntil: "2099-12-31", used: 0 },
+    { key: "KXIAOYAO4D-9F2G-5H1J-8L3K", maxUses: 5, validUntil: "2099-12-31", used: 0 },
+    { key: "YAO2X-5C7V-8B9N-1M4Q", maxUses: 5, validUntil: "2099-12-31", used: 0 },
+    { key: "8XIAOYAO1-R3T5-Y7U9-I2O4", maxUses: 5, validUntil: "2099-12-31", used: 0 },
+    { key: "YAO9P-6L2K-4J8H-3G1F", maxUses: 5, validUntil: "2099-12-31", used: 0 },
+    { key: "MXIAOYAO5N-2B4V-6C7X-9Z8Q", maxUses: 5, validUntil: "2099-12-31", used: 0 },
+    { key: "YAO4H-1J3K-7L8P-9O6I", maxUses: 5, validUntil: "2099-12-31", used: 0 },
+    { key: "2XIAOYAO6W-5E3R-7T9Y-1U4I", maxUses: 5, validUntil: "2099-12-31", used: 0 },
+    { key: "YAO7C-8V5B-9N2M-1Q4W", maxUses: 5, validUntil: "2099-12-31", used: 0 },
+    { key: "QXIAOYAO9Z-3X6C-8V2B-5N7M", maxUses: 5, validUntil: "2099-12-31", used: 0 },
+    { key: "YAO5D-2F4G-6H8J-1K3L", maxUses: 5, validUntil: "2099-12-31", used: 0 },
+    { key: "3XIAOYAO8P-9L1K-7J4H-2G5F", maxUses: 5, validUntil: "2099-12-31", used: 0 },
+    { key: "YAO6B-4V9N-8M2Q-1W3E", maxUses: 5, validUntil: "2099-12-31", used: 0 },
+    { key: "VXIAOYAO7C-5X8Z-9Q2W-4E6R", maxUses: 5, validUntil: "2099-12-31", used: 0 },
+    { key: "YAO8N-1M3Q-5W7E-9R2T", maxUses: 5, validUntil: "2099-12-31", used: 0 },
+    { key: "4XIAOYAO9Y-2U5I-8O3P-6I9O", maxUses: 5, validUntil: "2099-12-31", used: 0 },
+    { key: "YAO1F-3G5H-7J9K-2L4P", maxUses: 5, validUntil: "2099-12-31", used: 0 },
+    { key: "ZXIAOYAO2Q-6W8E-3R7T-9Y1U", maxUses: 5, validUntil: "2099-12-31", used: 0 },
+    { key: "YAO3M-5N7B-9V2C-8X4Z", maxUses: 5, validUntil: "2099-12-31", used: 0 },
+    { key: "9XIAOYAO4I-1O3P-6I8O-9P1I", maxUses: 5, validUntil: "2099-12-31", used: 0 },
+    { key: "YAO7K-2J4H-6G8F-1D3S", maxUses: 5, validUntil: "2099-12-31", used: 0 },
+    { key: "WXIAOYAO5E-3R7T-9Y1U-4I2O", maxUses: 5, validUntil: "2099-12-31", used: 0 },
+    { key: "YAO8V-6B9N-2M1Q-5W4E", maxUses: 5, validUntil: "2099-12-31", used: 0 },
+    { key: "5XIAOYAO6R-7T9Y-1U3I-8O4P", maxUses: 5, validUntil: "2099-12-31", used: 0 },
+    { key: "YAO9C-4X8Z-3Q5W-7E2R", maxUses: 5, validUntil: "2099-12-31", used: 0 },
+    { key: "EXIAOYAO7T-2Y4U-6I8O-9P1I", maxUses: 5, validUntil: "2099-12-31", used: 0 },
+    { key: "YAO2N-5M8B-9V3C-7X1Z", maxUses: 5, validUntil: "2099-12-31", used: 0 },
+    { key: "1XIAOYAO3H-4J6K-8L9P-2O5I", maxUses: 5, validUntil: "2099-12-31", used: 0 },
+    { key: "YAO4D-7F9G-1H2J-5K3L", maxUses: 5, validUntil: "2099-12-31", used: 0 },
+    { key: "RXIAOYAO8T-3Y5U-7I9O-1P2I", maxUses: 5, validUntil: "2099-12-31", used: 0 },
+    { key: "YAO6Q-9W2E-4R5T-7Y8U", maxUses: 5, validUntil: "2099-12-31", used: 0 },
+    { key: "7XIAOYAO9B-5N8V-2C4X-6Z9Q", maxUses: 5, validUntil: "2099-12-31", used: 0 },
+    { key: "YAO1P-3L6K-9J8H-4G2F", maxUses: 5, validUntil: "2099-12-31", used: 0 },
+    { key: "TXIAOYAO5Y-1U3I-6O8P-9I1O", maxUses: 5, validUntil: "2099-12-31", used: 0 },
+    { key: "YAO8M-2N5B-7V9C-1X3Z", maxUses: 5, validUntil: "2099-12-31", used: 0 },
+    { key: "6XIAOYAO4J-8H3G-5F1D-9S2A", maxUses: 5, validUntil: "2099-12-31", used: 0 }
+];
+        
+// 本地存储前缀
+        const STORAGE_PREFIX = "XY_SLICER_";
+        
+        // =============================================
+        // 主程序
+        // =============================================
+        
+        // DOM元素
+        const authOverlay = document.getElementById('authOverlay');
+        const mainContainer = document.getElementById('mainContainer');
+        const authKeyInput = document.getElementById('authKeyInput');
+        const authSubmitBtn = document.getElementById('authSubmitBtn');
+        const authMessage = document.getElementById('authMessage');
+        const licenseInfo = document.getElementById('licenseInfo');
+        
+        const tilUpload = document.getElementById('tilUpload');
+        const generateBtn = document.getElementById('generateBtn');
+        const saveBtn = document.getElementById('saveBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const outputCanvas = document.getElementById('outputCanvas');
+        const ctx = outputCanvas.getContext('2d', { willReadFrequently: true });
+        const fileName = document.getElementById('fileName');
+        const globalWidthPercent = document.getElementById('globalWidthPercent');
+        const globalWidthPercentValue = document.getElementById('globalWidthPercentValue');
+        const globalHeightPercent = document.getElementById('globalHeightPercent');
+        const globalHeightPercentValue = document.getElementById('globalHeightPercentValue');
+        const cornerRadius = document.getElementById('cornerRadius');
+        const cornerRadiusValue = document.getElementById('cornerRadiusValue');
+        const sliceColor = document.getElementById('sliceColor');
+        const positionType = document.getElementById('positionType');
+        const progressBar = document.getElementById('progressBar');
+        const progressText = document.getElementById('progressText');
+        const toggleAdvancedBtn = document.getElementById('toggleAdvancedBtn');
+        const advancedPanel = document.getElementById('advancedPanel');
+        const sliceControlsContainer = document.getElementById('sliceControlsContainer');
+        const shadowEnabled = document.getElementById('shadowEnabled');
+        const shadowColor = document.getElementById('shadowColor');
+        const shadowBlur = document.getElementById('shadowBlur');
+        const shadowBlurValue = document.getElementById('shadowBlurValue');
+        const shadowOffsetX = document.getElementById('shadowOffsetX');
+        const shadowOffsetXValue = document.getElementById('shadowOffsetXValue');
+        const shadowOffsetY = document.getElementById('shadowOffsetY');
+        const shadowOffsetYValue = document.getElementById('shadowOffsetYValue');
+        const shadowOpacity = document.getElementById('shadowOpacity');
+        const shadowOpacityValue = document.getElementById('shadowOpacityValue');
+        const strokeEnabled = document.getElementById('strokeEnabled');
+        const strokeColor = document.getElementById('strokeColor');
+        const strokeWidth = document.getElementById('strokeWidth');
+        const strokeWidthValue = document.getElementById('strokeWidthValue');
+        const strokeBlur = document.getElementById('strokeBlur');
+        const strokeBlurValue = document.getElementById('strokeBlurValue');
+        const strokeType = document.getElementById('strokeType');
+        const dashSettings = document.getElementById('dashSettings');
+        const dashPattern = document.getElementById('dashPattern');
+        const sliceTooltip = document.getElementById('sliceTooltip');
+        
+        // 变量
+        let slices = [];
+        let generated = false;
+        let originalLayout = { width: 0, height: 0 };
+        let advancedPanelOpen = false;
+        let hoveredSliceIndex = -1;
+        let currentLicense = null;
+        
+        // 初始化事件监听
+        function initEventListeners() {
+            // 卡密验证相关
+            authSubmitBtn.addEventListener('click', validateLicense);
+            authKeyInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') validateLicense();
+            });
+            
+            // 主程序事件
+            tilUpload.addEventListener('change', handleTilUpload);
+            generateBtn.addEventListener('click', generateImage);
+            saveBtn.addEventListener('click', saveImage);
+            resetBtn.addEventListener('click', resetAll);
+            toggleAdvancedBtn.addEventListener('click', toggleAdvancedPanel);
+            
+            // 控制项事件
+            globalWidthPercent.addEventListener('input', updateGlobalWidthPercent);
+            globalHeightPercent.addEventListener('input', updateGlobalHeightPercent);
+            cornerRadius.addEventListener('input', updateCornerRadius);
+            
+            // 阴影设置事件
+            shadowEnabled.addEventListener('change', updateShadowSettings);
+            shadowBlur.addEventListener('input', updateShadowBlur);
+            shadowOffsetX.addEventListener('input', updateShadowOffsetX);
+            shadowOffsetY.addEventListener('input', updateShadowOffsetY);
+            shadowOpacity.addEventListener('input', updateShadowOpacity);
+            
+            // 描边设置事件
+            strokeEnabled.addEventListener('change', updateStrokeSettings);
+            strokeWidth.addEventListener('input', updateStrokeWidth);
+            strokeBlur.addEventListener('input', updateStrokeBlur);
+            strokeType.addEventListener('change', updateStrokeType);
+            
+            // 颜色预设点击事件
+            document.addEventListener('click', function(e) {
+                if (e.target.classList.contains('preset')) {
+                    const color = e.target.getAttribute('data-color');
+                    const colorInput = e.target.closest('.color-control').querySelector('input[type="color"]');
+                    colorInput.value = color;
+                    colorInput.dispatchEvent(new Event('input'));
+                }
+            });
+            
+            // 颜色输入变化事件
+            sliceColor.addEventListener('input', updateColorPreview);
+            shadowColor.addEventListener('input', updateColorPreview);
+            strokeColor.addEventListener('input', updateColorPreview);
+            
+            // 画布交互事件
+            outputCanvas.addEventListener('click', handleCanvasClick);
+            outputCanvas.addEventListener('mousemove', handleCanvasHover);
+            
+            // 初始化工具提示
+            document.addEventListener('mousemove', moveTooltip);
+        }
+        
+        // =============================================
+        // 卡密验证功能
+        // =============================================
+        
+        // 验证卡密
+        function validateLicense() {
+            const key = authKeyInput.value.trim();
+            authMessage.textContent = '';
+            authMessage.className = 'auth-message';
+            
+            if (!key) {
+                showAuthMessage('请输入卡密', 'auth-error');
+                return;
+            }
+            
+            // 检查卡密是否有效
+            const license = VALID_KEYS.find(k => k.key === key);
+            
+            if (!license) {
+                showAuthMessage('无效的卡密', 'auth-error');
+                return;
+            }
+            
+            // 检查有效期
+            const today = new Date();
+            const validUntil = new Date(license.validUntil);
+            
+            if (today > validUntil) {
+                showAuthMessage('卡密已过期', 'auth-error');
+                return;
+            }
+            
+            // 检查使用次数
+            const storageKey = STORAGE_PREFIX + key;
+            const storedData = localStorage.getItem(storageKey);
+            let usedCount = 0;
+            
+            if (storedData) {
+                try {
+                    const data = JSON.parse(storedData);
+                    usedCount = data.used || 0;
+                } catch (e) {
+                    console.error('解析存储数据失败', e);
+                }
+            }
+            
+            // 检查是否超过最大使用次数
+            if (license.maxUses !== 999 && usedCount >= license.maxUses) {
+                showAuthMessage('卡密使用次数已达上限', 'auth-error');
+                return;
+            }
+            
+            // 验证通过
+            currentLicense = {
+                key: license.key,
+                maxUses: license.maxUses,
+                validUntil: license.validUntil,
+                used: usedCount + 1
+            };
+            
+            // 保存使用记录
+            localStorage.setItem(storageKey, JSON.stringify({
+                used: currentLicense.used,
+                lastUsed: new Date().toISOString()
+            }));
+            
+            showAuthMessage('验证成功！正在加载工具...', 'auth-success');
+            
+            // 3秒后隐藏验证界面
+            setTimeout(() => {
+                authOverlay.style.display = 'none';
+                mainContainer.style.display = 'block';
+                updateLicenseInfo();
+            }, 2000);
+        }
+        
+        // 显示验证消息
+        function showAuthMessage(message, className = '') {
+            authMessage.textContent = message;
+            authMessage.className = 'auth-message ' + className;
+        }
+        
+        // 更新许可证信息显示
+        function updateLicenseInfo() {
+            if (!currentLicense) return;
+            
+            const validDate = new Date(currentLicense.validUntil).toLocaleDateString();
+            let usageText = '';
+            
+            if (currentLicense.maxUses === 999) {
+                usageText = '无限次使用';
+            } else {
+                usageText = `已使用 ${currentLicense.used} 次 (共 ${currentLicense.maxUses} 次)`;
+            }
+            
+            licenseInfo.textContent = `卡密: ${currentLicense.key} | 有效期至: ${validDate} | ${usageText}`;
+        }
+        
+        // =============================================
+        // 主程序功能 (与原代码相同)
+        // =============================================
+        
+        // 更新全局宽度百分比显示
+        function updateGlobalWidthPercent() {
+            globalWidthPercentValue.textContent = globalWidthPercent.value;
+        }
+        
+        // 更新全局高度百分比显示
+        function updateGlobalHeightPercent() {
+            globalHeightPercentValue.textContent = globalHeightPercent.value;
+        }
+        
+        // 处理.til文件上传
+        function handleTilUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            fileName.textContent = `已选择: ${file.name}`;
+            
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                parseTilFile(event.target.result);
+                updateGenerateButtonState();
+                createSliceControls();
+            };
+            reader.readAsText(file);
+        }
+        
+        // 解析.til文件
+        function parseTilFile(content) {
+            slices = [];
+            const lines = content.split('\n');
+            let maxX = 0, maxY = 0;
+            
+            lines.forEach(line => {
+                // 解析切片信息
+                if (line.startsWith('SOURCE_RECT=')) {
+                    const rectStr = line.split('=')[1].trim();
+                    const [x, y, width, height] = rectStr.split(',').map(Number);
+                    
+                    slices.push({
+                        x, y, width, height,
+                        widthPercent: 80,  // 默认宽度百分比改为80%
+                        heightPercent: 80, // 默认高度百分比改为80%
+                        visible: true
+                    });
+                    
+                    // 计算原始布局尺寸
+                    maxX = Math.max(maxX, x + width);
+                    maxY = Math.max(maxY, y + height);
+                }
+            });
+            
+            originalLayout.width = maxX;
+            originalLayout.height = maxY;
+        }
+        
+        // 创建切片控制项
+        function createSliceControls() {
+            sliceControlsContainer.innerHTML = '';
+            
+            if (slices.length === 0) {
+                sliceControlsContainer.innerHTML = '<p>没有找到切片配置</p>';
+                return;
+            }
+            
+            slices.forEach((slice, index) => {
+                const sliceControl = document.createElement('div');
+                sliceControl.className = 'slice-control';
+                sliceControl.innerHTML = `
+                    <div class="slice-title">
+                        <span>切片 ${index + 1} (${slice.width}×${slice.height}px)</span>
+                        <div class="slice-toggle">
+                            <label for="sliceVisible-${index}">显示</label>
+                            <input type="checkbox" class="slice-visible" id="sliceVisible-${index}" 
+                                   ${slice.visible ? 'checked' : ''} data-index="${index}">
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <div class="control-item">
+                            <label for="sliceWidthPercent-${index}">宽度比例 <span id="sliceWidthPercentValue-${index}" class="range-value">${slice.widthPercent}</span>%</label>
+                            <input type="range" class="slice-width-percent" id="sliceWidthPercent-${index}" 
+                                   min="10" max="200" value="${slice.widthPercent}" data-index="${index}">
+                        </div>
+                        <div class="control-item">
+                            <label for="sliceHeightPercent-${index}">高度比例 <span id="sliceHeightPercentValue-${index}" class="range-value">${slice.heightPercent}</span>%</label>
+                            <input type="range" class="slice-height-percent" id="sliceHeightPercent-${index}" 
+                                   min="10" max="200" value="${slice.heightPercent}" data-index="${index}">
+                        </div>
+                    </div>
+                `;
+                sliceControlsContainer.appendChild(sliceControl);
+                
+                // 添加事件监听
+                document.getElementById(`sliceWidthPercent-${index}`).addEventListener('input', function() {
+                    const idx = parseInt(this.getAttribute('data-index'));
+                    slices[idx].widthPercent = parseInt(this.value);
+                    document.getElementById(`sliceWidthPercentValue-${idx}`).textContent = this.value;
+                });
+                
+                document.getElementById(`sliceHeightPercent-${index}`).addEventListener('input', function() {
+                    const idx = parseInt(this.getAttribute('data-index'));
+                    slices[idx].heightPercent = parseInt(this.value);
+                    document.getElementById(`sliceHeightPercentValue-${idx}`).textContent = this.value;
+                });
+                
+                document.getElementById(`sliceVisible-${index}`).addEventListener('change', function() {
+                    const idx = parseInt(this.getAttribute('data-index'));
+                    slices[idx].visible = this.checked;
+                });
+            });
+        }
+        
+        // 更新颜色预览
+        function updateColorPreview(e) {
+            // 通用颜色预览更新
+            const color = e.target.value;
+            // 可以根据需要添加特定预览元素的更新
+        }
+        
+        // 切换高级面板
+        function toggleAdvancedPanel() {
+            advancedPanelOpen = !advancedPanelOpen;
+            if (advancedPanelOpen) {
+                advancedPanel.style.display = 'block';
+                toggleAdvancedBtn.innerHTML = '高级设置 ▲';
+            } else {
+                advancedPanel.style.display = 'none';
+                toggleAdvancedBtn.innerHTML = '高级设置 ▼';
+            }
+        }
+        
+        // 更新圆角半径显示
+        function updateCornerRadius() {
+            cornerRadiusValue.textContent = cornerRadius.value;
+        }
+        
+        // 更新阴影模糊
+        function updateShadowBlur() {
+            shadowBlurValue.textContent = shadowBlur.value;
+        }
+        
+        // 更新阴影水平偏移
+        function updateShadowOffsetX() {
+            shadowOffsetXValue.textContent = shadowOffsetX.value;
+        }
+        
+        // 更新阴影垂直偏移
+        function updateShadowOffsetY() {
+            shadowOffsetYValue.textContent = shadowOffsetY.value;
+        }
+        
+        // 更新阴影透明度
+        function updateShadowOpacity() {
+            shadowOpacityValue.textContent = shadowOpacity.value;
+        }
+        
+        // 更新描边宽度
+        function updateStrokeWidth() {
+            strokeWidthValue.textContent = strokeWidth.value;
+        }
+        
+        // 更新描边模糊
+        function updateStrokeBlur() {
+            strokeBlurValue.textContent = strokeBlur.value;
+        }
+        
+        // 更新描边类型
+        function updateStrokeType() {
+            dashSettings.style.display = strokeType.value === 'dashed' ? 'block' : 'none';
+        }
+        
+        // 更新阴影设置
+        function updateShadowSettings() {
+            // 生成时处理
+        }
+        
+        // 更新描边设置
+        function updateStrokeSettings() {
+            // 生成时处理
+        }
+        
+        // 更新生成按钮状态
+        function updateGenerateButtonState() {
+            generateBtn.disabled = slices.length === 0;
+        }
+        
+        // 生成图片
+        function generateImage() {
+            if (slices.length === 0) {
+                alert('请先上传有效的.til文件');
+                return;
+            }
+            
+            // 设置画布大小为原始布局尺寸
+            outputCanvas.width = originalLayout.width;
+            outputCanvas.height = originalLayout.height;
+            
+            // 清除画布为完全透明
+            ctx.clearRect(0, 0, outputCanvas.width, outputCanvas.height);
+            
+            // 获取用户设置
+            const globalWidthPct = parseInt(globalWidthPercent.value) / 100;
+            const globalHeightPct = parseInt(globalHeightPercent.value) / 100;
+            const radius = parseInt(cornerRadius.value);
+            const position = positionType.value;
+            
+            // 阴影设置
+            const useShadow = shadowEnabled.checked;
+            const shadowColorValue = shadowColor.value;
+            const shadowBlurValue = parseInt(shadowBlur.value);
+            const shadowOffsetXValue = parseInt(shadowOffsetX.value) / 100;
+            const shadowOffsetYValue = parseInt(shadowOffsetY.value) / 100;
+            const shadowOpacityValue = parseInt(shadowOpacity.value) / 100;
+            
+            // 描边设置
+            const useStroke = strokeEnabled.checked;
+            const strokeColorValue = strokeColor.value;
+            const strokeWidthValue = parseInt(strokeWidth.value);
+            const strokeBlurValue = parseInt(strokeBlur.value);
+            const strokeTypeValue = strokeType.value;
+            const dashPatternValue = strokeTypeValue === 'dashed' ? 
+                dashPattern.value.split(',').map(Number) : [];
+            
+            // 更新进度
+            progressBar.style.width = '0%';
+            progressText.textContent = '准备生成...';
+            
+            // 分批处理以避免UI阻塞
+            let processed = 0;
+            const batchSize = 5;
+            
+            function processBatch() {
+                const batchEnd = Math.min(processed + batchSize, slices.length);
+                
+                for (let i = processed; i < batchEnd; i++) {
+                    const slice = slices[i];
+                    if (!slice.visible) {
+                        processed++;
+                        continue;
+                    }
+                    
+                    // 使用单独设置或全局设置
+                    const widthPct = (slice.widthPercent !== 80) ? (slice.widthPercent / 100) : globalWidthPct;
+                    const heightPct = (slice.heightPercent !== 80) ? (slice.heightPercent / 100) : globalHeightPct;
+                    
+                    const fillWidth = slice.width * widthPct;
+                    const fillHeight = slice.height * heightPct;
+                    
+                    // 计算填充位置
+                    let fillX, fillY;
+                    switch(position) {
+                        case 'top-left':
+                            fillX = slice.x;
+                            fillY = slice.y;
+                            break;
+                        case 'top-right':
+                            fillX = slice.x + slice.width - fillWidth;
+                            fillY = slice.y;
+                            break;
+                        case 'bottom-left':
+                            fillX = slice.x;
+                            fillY = slice.y + slice.height - fillHeight;
+                            break;
+                        case 'bottom-right':
+                            fillX = slice.x + slice.width - fillWidth;
+                            fillY = slice.y + slice.height - fillHeight;
+                            break;
+                        default: // center
+                            fillX = slice.x + (slice.width - fillWidth) / 2;
+                            fillY = slice.y + (slice.height - fillHeight) / 2;
+                    }
+                    
+                    // 绘制阴影
+                    if (useShadow) {
+                        ctx.save();
+                        ctx.fillStyle = shadowColorValue;
+                        ctx.globalAlpha = shadowOpacityValue;
+                        ctx.filter = `blur(${shadowBlurValue}px)`;
+                        
+                        const shadowOffsetX = slice.width * shadowOffsetXValue;
+                        const shadowOffsetY = slice.height * shadowOffsetYValue;
+                        
+                        roundRect(
+                            ctx, 
+                            fillX + shadowOffsetX, 
+                            fillY + shadowOffsetY, 
+                            fillWidth, 
+                            fillHeight, 
+                            radius
+                        );
+                        ctx.restore();
+                    }
+                    
+                    // 绘制填充
+                    ctx.fillStyle = sliceColor.value;
+                    roundRect(ctx, fillX, fillY, fillWidth, fillHeight, radius);
+                    
+                    // 绘制描边
+                    if (useStroke && strokeWidthValue > 0) {
+                        ctx.save();
+                        ctx.strokeStyle = strokeColorValue;
+                        ctx.lineWidth = strokeWidthValue;
+                        
+                        if (strokeBlurValue > 0) {
+                            ctx.filter = `blur(${strokeBlurValue}px)`;
+                        }
+                        
+                        if (strokeTypeValue === 'dashed' && dashPatternValue.length >= 2) {
+                            ctx.setLineDash(dashPatternValue);
+                        } else {
+                            ctx.setLineDash([]);
+                        }
+                        
+                        roundRect(ctx, fillX, fillY, fillWidth, fillHeight, radius, true);
+                        ctx.restore();
+                    }
+                    
+                    processed++;
+                    
+                    // 更新进度
+                    const progress = Math.floor((processed / slices.length) * 100);
+                    progressBar.style.width = `${progress}%`;
+                    progressText.textContent = `正在生成: ${progress}% (${processed}/${slices.length})`;
+                }
+                
+                if (processed < slices.length) {
+                    setTimeout(processBatch, 0);
+                } else {
+                    // 生成完成
+                    generated = true;
+                    saveBtn.disabled = false;
+                    progressText.textContent = `生成完成! 共 ${slices.length} 个切片`;
+                    
+                    // 3秒后重置进度文本
+                    setTimeout(() => {
+                        progressText.textContent = '准备就绪';
+                    }, 3000);
+                }
+            }
+            
+            processBatch();
+        }
+        
+        // 绘制圆角矩形（支持描边）
+        function roundRect(ctx, x, y, width, height, radius, stroke = false) {
+            ctx.beginPath();
+            ctx.moveTo(x + radius, y);
+            ctx.lineTo(x + width - radius, y);
+            ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+            ctx.lineTo(x + width, y + height - radius);
+            ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+            ctx.lineTo(x + radius, y + height);
+            ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+            ctx.lineTo(x, y + radius);
+            ctx.quadraticCurveTo(x, y, x + radius, y);
+            ctx.closePath();
+            
+            if (stroke) {
+                ctx.stroke();
+            } else {
+                ctx.fill();
+            }
+        }
+        
+        // 处理画布点击
+        function handleCanvasClick(e) {
+            if (!generated) return;
+            
+            const rect = outputCanvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            // 计算点击位置在画布中的坐标
+            const canvasX = x * (outputCanvas.width / rect.width);
+            const canvasY = y * (outputCanvas.height / rect.height);
+            
+            // 检查点击了哪个切片
+            for (let i = 0; i < slices.length; i++) {
+                const slice = slices[i];
+                if (canvasX >= slice.x && canvasX <= slice.x + slice.width &&
+                    canvasY >= slice.y && canvasY <= slice.y + slice.height) {
+                    alert(`您点击了切片 ${i + 1} (位置: ${slice.x},${slice.y} 尺寸: ${slice.width}×${slice.height})`);
+                    return;
+                }
+            }
+        }
+        
+        // 处理画布悬停
+        function handleCanvasHover(e) {
+            if (!generated) {
+                sliceTooltip.style.display = 'none';
+                return;
+            }
+            
+            const rect = outputCanvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            // 计算悬停位置在画布中的坐标
+            const canvasX = x * (outputCanvas.width / rect.width);
+            const canvasY = y * (outputCanvas.height / rect.height);
+            
+            // 检查悬停在哪个切片上
+            hoveredSliceIndex = -1;
+            for (let i = 0; i < slices.length; i++) {
+                const slice = slices[i];
+                if (canvasX >= slice.x && canvasX <= slice.x + slice.width &&
+                    canvasY >= slice.y && canvasY <= slice.y + slice.height) {
+                    hoveredSliceIndex = i;
+                    break;
+                }
+            }
+            
+            if (hoveredSliceIndex >= 0) {
+                const slice = slices[hoveredSliceIndex];
+                sliceTooltip.textContent = `切片 ${hoveredSliceIndex + 1}`;
+                sliceTooltip.style.display = 'block';
+            } else {
+                sliceTooltip.style.display = 'none';
+            }
+        }
+        
+        // 移动工具提示
+        function moveTooltip(e) {
+            if (hoveredSliceIndex >= 0) {
+                sliceTooltip.style.left = (e.clientX + 10) + 'px';
+                sliceTooltip.style.top = (e.clientY + 10) + 'px';
+            }
+        }
+        
+        // 保存图片（优化移动端体验）
+        function saveImage() {
+            if (!generated) {
+                alert('请先生成图片');
+                return;
+            }
+            
+            // 创建一个临时链接
+            outputCanvas.toBlob(function(blob) {
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+                
+                // 设置下载属性
+                link.download = `slices-${timestamp}.png`;
+                link.href = url;
+                
+                // 触发点击事件（兼容移动端）
+                const event = new MouseEvent('click', {
+                    view: window,
+                    bubbles: true,
+                    cancelable: true
+                });
+                
+                // 添加到DOM并触发点击
+                document.body.appendChild(link);
+                link.dispatchEvent(event);
+                document.body.removeChild(link);
+                
+                // 释放URL对象
+                setTimeout(() => {
+                    URL.revokeObjectURL(url);
+                }, 100);
+            }, 'image/png');
+        }
+        
+        // 重置所有
+        function resetAll() {
+            // 重置全局设置
+            globalWidthPercent.value = 80;
+            globalHeightPercent.value = 80;
+            cornerRadius.value = 10;
+            sliceColor.value = '#ff7eb9';
+            positionType.value = 'center';
+            
+            // 重置阴影设置
+            shadowEnabled.checked = false;
+            shadowColor.value = '#000000';
+            shadowBlur.value = 10;
+            shadowOffsetX.value = 5;
+            shadowOffsetY.value = 5;
+            shadowOpacity.value = 50;
+            
+            // 重置描边设置
+            strokeEnabled.checked = false;
+            strokeColor.value = '#ffffff';
+            strokeWidth.value = 2;
+            strokeBlur.value = 0;
+            strokeType.value = 'solid';
+            dashPattern.value = '5,3';
+            
+            // 更新显示
+            updateGlobalWidthPercent();
+            updateGlobalHeightPercent();
+            updateCornerRadius();
+            updateShadowBlur();
+            updateShadowOffsetX();
+            updateShadowOffsetY();
+            updateShadowOpacity();
+            updateStrokeWidth();
+            updateStrokeBlur();
+            updateStrokeType();
+            
+            // 重置切片数据
+            if (slices.length > 0) {
+                slices.forEach(slice => {
+                    slice.widthPercent = 80;
+                    slice.heightPercent = 80;
+                    slice.visible = true;
+                });
+                createSliceControls();
+            }
+            
+            // 重置画布
+            outputCanvas.width = 1;
+            outputCanvas.height = 1;
+            ctx.clearRect(0, 0, outputCanvas.width, outputCanvas.height);
+            
+            // 重置状态
+            generated = false;
+            saveBtn.disabled = true;
+            progressBar.style.width = '0%';
+            progressText.textContent = '准备就绪';
+            hoveredSliceIndex = -1;
+            sliceTooltip.style.display = 'none';
+        }
+        
+        // 初始化
+        initEventListeners();
+        updateGlobalWidthPercent();
+        updateGlobalHeightPercent();
+        
+        // 检查是否已有有效的许可证
+        function checkExistingLicense() {
+            // 这里可以添加检查本地存储中是否有有效许可证的逻辑
+            // 如果有，可以自动登录
+            
+            // 示例: 检查特定卡密是否有效
+            // const testKey = "XY2024-ABCD-EFGH-IJKL";
+            // const storageKey = STORAGE_PREFIX + testKey;
+            // const storedData = localStorage.getItem(storageKey);
+            // if (storedData) {
+            //     try {
+            //         const data = JSON.parse(storedData);
+            //         const license = VALID_KEYS.find(k => k.key === testKey);
+            //         if (license && (license.maxUses === 999 || data.used < license.maxUses)) {
+            //             currentLicense = {
+            //                 key: license.key,
+            //                 maxUses: license.maxUses,
+            //                 validUntil: license.validUntil,
+            //                 used: data.used + 1
+            //             };
+            //             localStorage.setItem(storageKey, JSON.stringify({
+            //                 used: currentLicense.used,
+            //                 lastUsed: new Date().toISOString()
+            //             }));
+            //             authOverlay.style.display = 'none';
+            //             mainContainer.style.display = 'block';
+            //             updateLicenseInfo();
+            //             return;
+            //         }
+            //     } catch (e) {
+            //         console.error('解析存储数据失败', e);
+            //     }
+            // }
+            
+            // 默认显示验证界面
+            authOverlay.style.display = 'flex';
+            mainContainer.style.display = 'none';
+        }
+        
+        // 启动时检查许可证
+        checkExistingLicense();
+        
+        // 移动端提示
+        if (/Mobi|Android/i.test(navigator.userAgent)) {
+            alert('提示：在移动端保存图片时，请使用浏览器的"长按图片→保存图片"功能，或点击"保存图片"按钮');
+        }
+    </script>
+</body>
+</html>
